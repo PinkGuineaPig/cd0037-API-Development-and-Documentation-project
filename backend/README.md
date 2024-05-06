@@ -4,7 +4,7 @@
 
 ### Install Dependencies
 
-1. **Python 3.7** - Follow instructions to install the latest version of python for your platform in the [python docs](https://docs.python.org/3/using/unix.html#getting-and-installing-the-latest-version-of-python)
+1. **Python 3.10.12** - Follow instructions to install the latest version of python for your platform in the [python docs](https://docs.python.org/3/using/unix.html#getting-and-installing-the-latest-version-of-python)
 
 2. **Virtual Environment** - We recommend working within a virtual environment whenever using Python for projects. This keeps your dependencies for each project separate and organized. Instructions for setting up a virual environment for your platform can be found in the [python docs](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
 
@@ -35,6 +35,7 @@ Populate the database using the `trivia.psql` file provided. From the `backend` 
 ```bash
 psql trivia < trivia.psql
 ```
+
 
 ### Run the Server
 
@@ -71,7 +72,31 @@ One note before you delve into your tasks: for each endpoint, you are expected t
 
 You will need to provide detailed documentation of your API endpoints including the URL, request parameters, and the response body. Use the example below as a reference.
 
-### Documentation Example
+### API Reference
+
+## Getting Started
+  - Backend Base URL: http://127.0.0.1:5000/
+  - Frontend Base URL: http://127.0.0.1:3000/
+
+## Error Handling
+
+All errors are defined in the error_handlers.py.
+The Errors are returned in the following format:
+```json
+  {
+    "success": False,
+    "error": 400,
+    "message": "Message"
+  }
+```
+
+The following errors are prepared:
+-   400, handle_bad_request
+-   404, handle_not_found_error
+-   500, handle_server_error
+
+
+## Endpoints
 
 `GET '/api/v1.0/categories'`
 
@@ -79,14 +104,245 @@ You will need to provide detailed documentation of your API endpoints including 
 - Request Arguments: None
 - Returns: An object with a single key, `categories`, that contains an object of `id: category_string` key: value pairs.
 
+Example:
+```bash
+  curl -s http://127.0.0.1:5000/categories | python3 -m json.tool
+```
+
+Example Response:
 ```json
 {
-  "1": "Science",
-  "2": "Art",
-  "3": "Geography",
-  "4": "History",
-  "5": "Entertainment",
-  "6": "Sports"
+    "categories": {
+        "1": "Science",
+        "2": "Art",
+        "3": "Geography",
+        "4": "History",
+        "5": "Entertainment",
+        "6": "Sports"
+    },
+    "success": true
+}
+```
+---
+
+`GET '/api/v1.0/questions'`
+
+- Fetches questions from the database. The questions are paginated -> 10 Questions per page
+- Request Arguments: None
+- Returns: An object with a keys: `categories`,`questions`,`keys` and `total_questions`.
+- `questions` is a list of questions each with keys:
+    -  `answer`
+    -  `category`
+    -  `difficulty`
+    -  `id`
+    -  `question`
+
+Example:
+```bash
+  curl -s http://127.0.0.1:5000/questions | python3 -m json.tool
+```
+
+Example Response:
+```json
+{
+    "categories": {
+        "1": "Science",
+        "2": "Art",
+        "3": "Geography",
+        "4": "History",
+        "5": "Entertainment",
+        "6": "Sports"
+    },
+    "currentCategory": null,
+    "questions": [
+        {
+            "answer": "Apollo 13",
+            "category": 5,
+            "difficulty": 4,
+            "id": 2,
+            "question": "What movie earned Tom Hanks his third straight Oscar nomination, in 1996?"
+        },
+        {
+            "answer": "Tom Cruise",
+            "category": 5,
+            "difficulty": 4,
+            "id": 4,
+            "question": "What actor did author Anne Rice first denounce, then praise in the role of her beloved Lestat?"
+        }
+    ],
+    "success": true,
+    "totalQuestions": 19
+}
+```
+
+***
+
+`DELETE '/questions/int:id'`
+
+- Deletes the question with the given ID from the DB
+- Request Arguments: Integer number for the ID
+- Returns: An object with a keys: `success`,`deleted`,`total_questions` and `currentCategory`.
+
+Example:
+```bash
+  curl -X DELETE http://127.0.0.1:5000/questions/43
+```
+
+Example Response:
+```json
+{
+  "currentCategory":null,
+  "deleted":43,
+  "success":true,
+  "total_questions":19
+}
+```
+
+Example Error response, when ID does not exist
+```bash
+  curl -X DELETE http://127.0.0.1:5000/questions/100000
+```
+```json
+{
+  "error":400,
+  "message":"Question with ID 100000 not found.",
+  "success":false
+}
+```
+
+---
+
+`POST '/questions`
+
+- Creates a question with the given arguments
+- Request Arguments: question, answer, difficulty and category are all mandatory
+- Returns: An object with a keys: `created`,`questions`,`success` and `total_questions`.
+- questions is a list of dictionaries with the following keys:
+  - `answer`
+  - `category`
+  - `difficulty`
+  - `id`
+  - `question`
+
+```bash
+  curl -X POST -H "Content-Type: application/json" -d '{"question": "What is 4+4?", "answer": "8", "diffic
+  ulty": 1, "category": "1"}' http://127.0.0.1:5000/questions/add
+```
+
+Example Response:
+```json
+{
+  "created":44,
+  "questions":[
+      {
+        "answer":"Apollo 13",
+        "category":5,
+        "difficulty":4,
+        "id":2,
+        "question":"What movie earned Tom Hanks his third straight Oscar nomination, in 1996?"
+      },
+      {
+        "answer":"Tom Cruise",
+        "category":5,
+        "difficulty":4,
+        "id":4,
+        "question":"What actor did author Anne Rice first denounce, then praise in the role of her beloved Lestat?"
+      },
+    ],
+    "success":true,
+    "total_questions":20
+}
+```
+
+
+
+***
+
+`POST '/questions/search'`
+
+- String to be looked for in the questions table of the DB -> used to search questions
+- Request Arguments: String to be looked for
+- Returns: A list of all questions matching the input string
+
+Example:
+```bash
+  curl -X POST -H "Content-Type: application/json" -d '{"searchTerm": "What"}' http://127.0.0.1:5000/questions/search
+```
+
+Example Response:
+```json
+{
+  "current_category":null,
+  "questions":[
+    {"answer":"Muhammad Ali",
+    "category":4,
+    "difficulty":1,
+    "id":9,
+    "question":"What boxer's original name is Cassius Clay?"
+    },
+    {
+      "answer":"8",
+      "category":1,
+      "difficulty":1,
+      "id":44,
+      "question":"What is 4+4?"
+    }
+    ],
+    "total_questions":9
+}
+```
+
+
+***
+
+`GET '/categories/int:id/questions'`
+
+- Get questions for a specific category
+- Request Arguments: category id
+- Returns: A list of all questions corresponding to the chosen category
+
+Example:
+```bash
+  curl -s http://127.0.0.1:5000/categories/1/questions | python3 -m json.tool
+```
+
+Example Response:
+```json
+{
+    "currentCategory": [
+        "Science"
+    ],
+    "questions": [
+        {
+            "answer": "The Liver",
+            "category": 1,
+            "difficulty": 4,
+            "id": 20,
+            "question": "What is the heaviest organ in the human body?"
+        },
+        {
+            "answer": "Alexander Fleming",
+            "category": 1,
+            "difficulty": 3,
+            "id": 21,
+            "question": "Who discovered penicillin?"
+        },
+        {
+            "answer": "Blood",
+            "category": 1,
+            "difficulty": 4,
+            "id": 22,
+            "question": "Hematology is a branch of medicine involving the study of what?"
+        },
+        {
+            "answer": "8",
+            "category": 1,
+            "difficulty": 1,
+            "id": 44,
+            "question": "What is 4+4?"
+        }
+    ],
+    "success": true
 }
 ```
 
